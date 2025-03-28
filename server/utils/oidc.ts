@@ -124,11 +124,17 @@ export function validateUserClaims(
       throw new OidcAuthorizationError('User was missing a required claim.');
   });
 
+  const roleClaim = provider.roleClaim;
+  if (!roleClaim) return;
+
+  if (!Object.hasOwn(userInfo, roleClaim))
+    throw new OidcAuthorizationError(
+      `User info did not contain the "Role Claim" of "${provider.roleClaim}"`
+    );
+
   const providerUserRoles = provider.userRoles?.split(',') ?? [];
   const hasUserRole = providerUserRoles.some((userRole) =>
-    userInfo[provider.roleClaim ?? 'groups'].some(
-      (userInfoRole) => userRole === userInfoRole
-    )
+    userInfo[roleClaim].some((userInfoRole) => userRole === userInfoRole)
   );
 
   if (!hasUserRole)
