@@ -1,5 +1,5 @@
 import type {
-  AutheliaJwtClaims,
+  AdditionalJwtClaims,
   IdTokenClaims,
   OidcProviderMetadata,
   OidcStandardClaims,
@@ -124,18 +124,14 @@ export function validateUserClaims(
       throw new OidcAuthorizationError('User was missing a required claim.');
   });
 
-  // TODO: This needs to use the defined provider 'Role Claim'
   const providerUserRoles = provider.userRoles?.split(',') ?? [];
   const hasUserRole = providerUserRoles.some((userRole) =>
-    userInfo.groups?.some((userInfoRole) => userRole === userInfoRole)
+    userInfo[provider.roleClaim ?? 'groups'].some(
+      (userInfoRole) => userRole === userInfoRole
+    )
   );
 
-  const providerAdminRoles = provider.adminRoles?.split(',') ?? [];
-  const hasAdminRole = providerAdminRoles.some((adminRole) =>
-    userInfo.groups?.some((userInfoRole) => adminRole === userInfoRole)
-  );
-
-  if (!hasUserRole && !hasAdminRole)
+  if (!hasUserRole)
     throw new OidcAuthorizationError(
       'User does not have any roles authorizing access'
     );
@@ -222,4 +218,4 @@ export const createIdTokenSchema = ({
 
 export type FullUserInfo = IdTokenClaims &
   OidcStandardClaims &
-  AutheliaJwtClaims;
+  AdditionalJwtClaims;
