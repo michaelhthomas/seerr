@@ -178,6 +178,10 @@ const Login = () => {
     )),
   ].filter((o): o is JSX.Element => !!o);
 
+  if (!settings.currentSettings.localLogin && !settings.currentSettings.mediaServerLogin && settings.currentSettings.openIdProviders.length === 1) {
+    router.push(`/api/v1/auth/oidc/login/${settings.currentSettings.openIdProviders[0].slug}`)
+  }
+
   return (
     <div className="relative flex min-h-screen flex-col bg-gray-900 py-14">
       <PageTitle title={intl.formatMessage(messages.signin)} />
