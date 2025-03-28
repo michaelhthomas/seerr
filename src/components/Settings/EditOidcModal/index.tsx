@@ -29,6 +29,7 @@ const messages = defineMessages('settings.settings.SettingsOidc', {
   oidcDomainTip:
     "The base URL of the identity provider's OpenID Connect endpoint",
   oidcSlug: 'Provider Slug',
+  oidcSlugError: 'Avoid using whitespaces. Replace them with dashes!',
   oidcSlugTip: 'Unique identifier for the provider',
   oidcName: 'Provider Name',
   oidcNameTip: 'Name of the provider which appears on the login screen',
@@ -58,19 +59,6 @@ interface EditOidcModalProps {
   onOk: () => void;
 }
 
-function SlugField(props: FieldAttributes<unknown>) {
-  const {
-    values: { name },
-    setFieldValue,
-  } = useFormikContext<Partial<OidcProvider>>();
-
-  useEffect(() => {
-    setFieldValue(props.name, name?.toLowerCase().replace(/\s/g, '-'));
-  }, [props.name, name, setFieldValue]);
-
-  return <Field {...props} />;
-}
-
 export default function EditOidcModal(props: EditOidcModalProps) {
   const intl = useIntl();
   const { addToast } = useToasts();
@@ -83,7 +71,7 @@ export default function EditOidcModal(props: EditOidcModalProps) {
       field: intl.formatMessage(messages[field]),
     });
   const oidcSettingsSchema = Yup.object().shape({
-    slug: Yup.string().required(errorMessage('oidcSlug')),
+    slug: Yup.string().matches(/^\S*$/, intl.formatMessage(messages['oidcSlugError'])).required(errorMessage('oidcSlug')),
     name: Yup.string().required(errorMessage('oidcName')),
     issuerUrl: Yup.string()
       .url(errorMessage('oidcDomain', 'url'))
@@ -285,7 +273,7 @@ export default function EditOidcModal(props: EditOidcModalProps) {
                         </span>
                       </label>
                       <div className="form-input-area">
-                        <SlugField
+                        <Field
                           id="oidcSlug"
                           name="slug"
                           type="text"
