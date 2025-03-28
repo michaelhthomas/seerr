@@ -144,6 +144,15 @@ export interface OidcStandardClaims {
 }
 
 /**
+ * Authelia JWT claims.
+ *
+ * @public
+ */
+export interface AutheliaJwtClaims {
+  groups?: string[];
+}
+
+/**
  * Standard JWT claims.
  *
  * @public

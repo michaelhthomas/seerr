@@ -59,6 +59,9 @@ export type OidcProvider = {
   logo?: string;
   requiredClaims?: string;
   scopes?: string;
+  roleClaim?: string;
+  adminRoles?: string;
+  userRoles?: string;
   newUserLogin?: boolean;
 };
 

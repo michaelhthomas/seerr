@@ -1,4 +1,5 @@
 import type {
+  AutheliaJwtClaims,
   IdTokenClaims,
   OidcProviderMetadata,
   OidcStandardClaims,
@@ -40,7 +41,10 @@ export async function getOpenIdRedirectUrl(
     `${req.protocol}://${req.headers.host}`
   ).toString();
   url.searchParams.set('redirect_uri', callbackUrl);
-  url.searchParams.set('scope', 'openid profile email');
+  url.searchParams.set(
+    'scope',
+    provider.scopes?.replaceAll(',', ' ') ?? 'openid profile email'
+  );
   url.searchParams.set('state', state);
   return url.toString();
 }
@@ -111,6 +115,7 @@ export function tryGetUserInfoKey<T extends PrimitiveString>(
 
 export function validateUserClaims(
   userInfo: FullUserInfo,
+  provider: OidcProvider,
   requiredClaims: string[]
 ) {
   requiredClaims.some((claim) => {
@@ -118,6 +123,22 @@ export function validateUserClaims(
     if (!value)
       throw new OidcAuthorizationError('User was missing a required claim.');
   });
+
+  // TODO: This needs to use the defined provider 'Role Claim'
+  const providerUserRoles = provider.userRoles?.split(',') ?? [];
+  const hasUserRole = providerUserRoles.some((userRole) =>
+    userInfo.groups?.some((userInfoRole) => userRole === userInfoRole)
+  );
+
+  const providerAdminRoles = provider.adminRoles?.split(',') ?? [];
+  const hasAdminRole = providerAdminRoles.some((adminRole) =>
+    userInfo.groups?.some((userInfoRole) => adminRole === userInfoRole)
+  );
+
+  if (!hasUserRole && !hasAdminRole)
+    throw new OidcAuthorizationError(
+      'User does not have any roles authorizing access'
+    );
 }
 
 /** Generates a schema to validate ID token JWT and userinfo claims */
@@ -199,4 +220,6 @@ export const createIdTokenSchema = ({
   });
 };
 
-export type FullUserInfo = IdTokenClaims & OidcStandardClaims;
+export type FullUserInfo = IdTokenClaims &
+  OidcStandardClaims &
+  AutheliaJwtClaims;
