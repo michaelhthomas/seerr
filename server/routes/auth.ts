@@ -45,7 +45,7 @@ authRoutes.get('/me', isAuthenticated(), async (req, res) => {
   });
 
   // check if email is required in settings and if user has an valid email
-  const settings = await getSettings();
+  const settings = getSettings();
   if (
     settings.notifications.agents.email.options.userEmailRequired &&
     !EmailValidator.validate(user.email)
