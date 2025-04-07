@@ -25,6 +25,16 @@ export async function getOpenIdConfiguration(domain: string) {
   return wellKnownInfo;
 }
 
+function getOpenIdCallbackUrl(req: Request, provider: OidcProvider) {
+  const callbackUrl = new URL(
+    `/login`,
+    `${req.protocol}://${req.headers.host}`
+  );
+  callbackUrl.searchParams.set('provider', provider.slug);
+  callbackUrl.searchParams.set('callback', 'true');
+  return callbackUrl.toString();
+}
+
 /** Generate authentication request url */
 export async function getOpenIdRedirectUrl(
   req: Request,
@@ -36,15 +46,8 @@ export async function getOpenIdRedirectUrl(
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('client_id', provider.clientId);
 
-  const callbackUrl = new URL(
-    `/login/oidc/callback/${provider.slug}`,
-    `${req.protocol}://${req.headers.host}`
-  ).toString();
-  url.searchParams.set('redirect_uri', callbackUrl);
-  url.searchParams.set(
-    'scope',
-    provider.scopes?.replaceAll(',', ' ') ?? 'openid profile email'
-  );
+  url.searchParams.set('redirect_uri', getOpenIdCallbackUrl(req, provider));
+  url.searchParams.set('scope', provider.scopes ?? 'openid profile email');
   url.searchParams.set('state', state);
   return url.toString();
 }
@@ -56,15 +59,10 @@ export async function fetchOpenIdTokenData(
   wellKnownInfo: OidcProviderMetadata,
   code: string
 ): Promise<OidcTokenResponse> {
-  const callbackUrl = new URL(
-    `/login/oidc/callback/${provider.slug}`,
-    `${req.protocol}://${req.headers.host}`
-  );
-
   const formData = new URLSearchParams();
   formData.append('client_secret', provider.clientSecret);
   formData.append('grant_type', 'authorization_code');
-  formData.append('redirect_uri', callbackUrl.toString());
+  formData.append('redirect_uri', getOpenIdCallbackUrl(req, provider));
   formData.append('client_id', provider.clientId);
   formData.append('code', code);
 
