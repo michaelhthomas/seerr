@@ -861,7 +861,7 @@ authRoutes.get('/oidc/callback/:slug', async (req, res, next) => {
 
     // Validate that user meets required claims
     try {
-      validateUserClaims(fullUserInfo, requiredClaims);
+      validateUserClaims(fullUserInfo, provider, requiredClaims);
     } catch (error) {
       logger.info('Failed OIDC login attempt', {
         cause: 'Failed to validate required claims',

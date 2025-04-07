@@ -44,6 +44,12 @@ const messages = defineMessages('settings.settings.SettingsOidc', {
   oidcRequiredClaims: 'Required Claims',
   oidcRequiredClaimsTip:
     'Comma-separated list of boolean claims that are required to log in',
+  oidcRoleClaim: 'Role Claim',
+  oidcRoleClaimTip:
+    'The claim used to grab the roles from the OIDC provider. For Authelia, this is likely groups, unless you have a custom setup',
+  oidcUserRoles: 'User Roles',
+  oidcUserRolesTip:
+    'Comma-separated list of roles to look for in OIDC response. Used to determine if a login from a user is authorized access.',
   oidcNewUserLogin: 'Allow New Users',
   oidcNewUserLoginTip:
     'Create accounts for new users logging in with this provider',
@@ -93,6 +99,9 @@ export default function EditOidcModal(props: EditOidcModalProps) {
     logo: Yup.string(),
     requiredClaims: Yup.string(),
     scopes: Yup.string(),
+    roleClaim: Yup.string(),
+    userRoles: Yup.string(),
+    adminRoles: Yup.string(),
     newUserLogin: Yup.boolean(),
   });
 
@@ -136,6 +145,8 @@ export default function EditOidcModal(props: EditOidcModalProps) {
           logo: props.provider?.logo,
           requiredClaims: props.provider?.requiredClaims,
           scopes: props.provider?.scopes,
+          roleClaim: props.provider?.roleClaim,
+          userRoles: props.provider?.userRoles,
           newUserLogin: props.provider?.newUserLogin,
         }}
         validationSchema={oidcSettingsSchema}
@@ -338,6 +349,46 @@ export default function EditOidcModal(props: EditOidcModalProps) {
                           className="error"
                           component="span"
                           name="requiredClaims"
+                        />
+                      </div>
+                    </div>
+                    <div className="form-row">
+                      <label htmlFor="oidcRoleClaim" className="text-label">
+                        {intl.formatMessage(messages.oidcRoleClaim)}
+                        <span className="label-tip">
+                          {intl.formatMessage(messages.oidcRoleClaimTip)}
+                        </span>
+                      </label>
+                      <div className="form-input-area">
+                        <Field
+                          id="oidcRoleClaim"
+                          name="roleClaim"
+                          type="text"
+                        />
+                        <ErrorMessage
+                          className="error"
+                          component="span"
+                          name="roleClaim"
+                        />
+                      </div>
+                    </div>
+                    <div className="form-row">
+                      <label htmlFor="oidcUserRoles" className="text-label">
+                        {intl.formatMessage(messages.oidcUserRoles)}
+                        <span className="label-tip">
+                          {intl.formatMessage(messages.oidcUserRolesTip)}
+                        </span>
+                      </label>
+                      <div className="form-input-area">
+                        <Field
+                          id="oidcUserRoles"
+                          name="userRoles"
+                          type="text"
+                        />
+                        <ErrorMessage
+                          className="error"
+                          component="span"
+                          name="userRoles"
                         />
                       </div>
                     </div>

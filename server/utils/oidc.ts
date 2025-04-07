@@ -1,4 +1,5 @@
 import type {
+  AdditionalJwtClaims,
   IdTokenClaims,
   OidcProviderMetadata,
   OidcStandardClaims,
@@ -112,6 +113,7 @@ export function tryGetUserInfoKey<T extends PrimitiveString>(
 
 export function validateUserClaims(
   userInfo: FullUserInfo,
+  provider: OidcProvider,
   requiredClaims: string[]
 ) {
   requiredClaims.some((claim) => {
@@ -119,6 +121,24 @@ export function validateUserClaims(
     if (!value)
       throw new OidcAuthorizationError('User was missing a required claim.');
   });
+
+  const roleClaim = provider.roleClaim;
+  if (!roleClaim) return;
+
+  if (!Object.hasOwn(userInfo, roleClaim))
+    throw new OidcAuthorizationError(
+      `User info did not contain the "Role Claim" of "${provider.roleClaim}"`
+    );
+
+  const providerUserRoles = provider.userRoles?.split(',') ?? [];
+  const hasUserRole = providerUserRoles.some((userRole) =>
+    userInfo[roleClaim].some((userInfoRole) => userRole === userInfoRole)
+  );
+
+  if (!hasUserRole)
+    throw new OidcAuthorizationError(
+      'User does not have any roles authorizing access'
+    );
 }
 
 /** Generates a schema to validate ID token JWT and userinfo claims */
@@ -200,4 +220,6 @@ export const createIdTokenSchema = ({
   });
 };
 
-export type FullUserInfo = IdTokenClaims & OidcStandardClaims;
+export type FullUserInfo = IdTokenClaims &
+  OidcStandardClaims &
+  AdditionalJwtClaims;

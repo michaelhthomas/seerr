@@ -144,6 +144,15 @@ export interface OidcStandardClaims {
 }
 
 /**
+ * Additional JWT claims.
+ *
+ * @public
+ */
+export interface AdditionalJwtClaims {
+  [key: string]: string[];
+}
+
+/**
  * Standard JWT claims.
  *
  * @public
