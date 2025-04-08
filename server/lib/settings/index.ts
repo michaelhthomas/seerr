@@ -158,7 +158,6 @@ export interface MainSettings {
 
 export interface NetworkSettings {
   csrfProtection: boolean;
-  forceIpv4First: boolean;
   trustProxy: boolean;
   proxy: ProxySettings;
 }
@@ -277,6 +276,7 @@ export interface NotificationAgentGotify extends NotificationAgentConfig {
   options: {
     url: string;
     token: string;
+    priority: number;
   };
 }
 
@@ -491,6 +491,7 @@ class Settings {
             options: {
               url: '',
               token: '',
+              priority: 0,
             },
           },
         },
@@ -536,7 +537,6 @@ class Settings {
       network: {
         csrfProtection: false,
         trustProxy: false,
-        forceIpv4First: false,
         proxy: {
           enabled: false,
           hostname: '',

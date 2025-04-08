@@ -11,6 +11,7 @@ import defineMessages from '@app/utils/defineMessages';
 import { ArrowDownOnSquareIcon, CogIcon } from '@heroicons/react/24/outline';
 import { MediaServerType } from '@server/constants/server';
 import type { MainSettings } from '@server/lib/settings';
+import axios from 'axios';
 import { Field, Form, Formik } from 'formik';
 import { useState } from 'react';
 import { useIntl } from 'react-intl';
@@ -124,30 +125,23 @@ const SettingsUsers = () => {
           enableReinitialize
           onSubmit={async (values) => {
             try {
-              const res = await fetch('/api/v1/settings/main', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  localLogin: values.localLogin,
-                  mediaServerLogin: values.mediaServerLogin,
-                  oidcLogin: values.oidcLogin,
-                  newPlexLogin: values.newPlexLogin,
-                  defaultQuotas: {
-                    movie: {
-                      quotaLimit: values.movieQuotaLimit,
-                      quotaDays: values.movieQuotaDays,
-                    },
-                    tv: {
-                      quotaLimit: values.tvQuotaLimit,
-                      quotaDays: values.tvQuotaDays,
-                    },
+              await axios.post('/api/v1/settings/main', {
+                localLogin: values.localLogin,
+                mediaServerLogin: values.mediaServerLogin,
+                oidcLogin: values.oidcLogin,
+                newPlexLogin: values.newPlexLogin,
+                defaultQuotas: {
+                  movie: {
+                    quotaLimit: values.movieQuotaLimit,
+                    quotaDays: values.movieQuotaDays,
                   },
-                  defaultPermissions: values.defaultPermissions,
-                }),
+                  tv: {
+                    quotaLimit: values.tvQuotaLimit,
+                    quotaDays: values.tvQuotaDays,
+                  },
+                },
+                defaultPermissions: values.defaultPermissions,
               });
-              if (!res.ok) throw new Error();
               mutate('/api/v1/settings/public');
 
               addToast(intl.formatMessage(messages.toastSettingsSuccess), {
