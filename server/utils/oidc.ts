@@ -46,7 +46,7 @@ export async function getOpenIdRedirectUrl(
   url.searchParams.set('client_id', provider.clientId);
 
   url.searchParams.set('redirect_uri', getOpenIdCallbackUrl(req, provider));
-  url.searchParams.set('scope', provider.scopes ?? 'openid profile email');
+  url.searchParams.set('scope', provider.scopes?.replaceAll(',', ' ') ?? 'openid profile email');
   url.searchParams.set('state', state);
   return url.toString();
 }
