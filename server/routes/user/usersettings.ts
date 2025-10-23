@@ -21,7 +21,7 @@ import { ApiError } from '@server/types/error';
 import { getHostname } from '@server/utils/getHostname';
 import { Router } from 'express';
 import net from 'net';
-import { In, type FindOptionsWhere } from 'typeorm';
+import { Not } from 'typeorm';
 import { canMakePermissionsChange } from '.';
 
 const isOwnProfile = (): Middleware => {
@@ -129,8 +129,9 @@ userSettingsRoutes.post<
     }
 
     const existingUser = await userRepository.findOne({
-      where: { email: user.email },
+      where: { email: user.email, id: Not(user.id) },
     });
+
     if (oldEmail !== user.email && existingUser) {
       throw new ApiError(400, ApiErrorCode.InvalidEmail);
     }
@@ -314,7 +315,7 @@ userSettingsRoutes.post<{ authToken: string }>(
     // Do not allow linking of an already linked account
     if (await userRepository.exist({ where: { plexId: account.id } })) {
       return res.status(422).json({
-        message: 'This Plex account is already linked to a Jellyseerr user',
+        message: 'This Plex account is already linked to a Seerr user',
       });
     }
 
@@ -417,13 +418,13 @@ userSettingsRoutes.post<{ username: string; password: string }>(
       })
     ) {
       return res.status(422).json({
-        message: 'The specified account is already linked to a Jellyseerr user',
+        message: 'The specified account is already linked to a Seerr user',
       });
     }
 
     const hostname = getHostname();
     const deviceId = Buffer.from(
-      `BOT_jellyseerr_${req.user.username ?? ''}`
+      req.user?.id === 1 ? 'BOT_seerr' : `BOT_seerr_${req.user.username ?? ''}`
     ).toString('base64');
 
     const jellyfinserver = new JellyfinAPI(hostname, undefined, deviceId);
@@ -452,8 +453,7 @@ userSettingsRoutes.post<{ username: string; password: string }>(
         })
       ) {
         return res.status(422).json({
-          message:
-            'The specified account is already linked to a Jellyseerr user',
+          message: 'The specified account is already linked to a Seerr user',
         });
       }
 

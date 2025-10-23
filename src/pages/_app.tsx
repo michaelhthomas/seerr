@@ -6,7 +6,6 @@ import StatusChecker from '@app/components/StatusChecker';
 import Toast from '@app/components/Toast';
 import ToastContainer from '@app/components/ToastContainer';
 import { InteractionProvider } from '@app/context/InteractionContext';
-import type { AvailableLocale } from '@app/context/LanguageContext';
 import { LanguageContext } from '@app/context/LanguageContext';
 import { SettingsProvider } from '@app/context/SettingsContext';
 import { UserContext } from '@app/context/UserContext';
@@ -16,6 +15,7 @@ import '@app/styles/globals.css';
 import { polyfillIntl } from '@app/utils/polyfillIntl';
 import { MediaServerType } from '@server/constants/server';
 import type { PublicSettingsResponse } from '@server/interfaces/api/settingsInterfaces';
+import type { AvailableLocale } from '@server/types/languages';
 import axios from 'axios';
 import type { AppInitialProps, AppProps } from 'next/app';
 import App from 'next/app';
@@ -144,18 +144,32 @@ const CoreApp: Omit<NextAppComponentType, 'origGetInitialProps'> = ({
       clearAppBadge?: () => Promise<void>;
     };
 
-    if ('setAppBadge' in navigator) {
-      if (
-        !router.pathname.match(/(login|setup|resetpassword)/) &&
-        hasPermission(Permission.ADMIN)
-      ) {
-        requestsCount().then((data) =>
-          newNavigator?.setAppBadge?.(data.pending)
-        );
-      } else {
-        newNavigator?.clearAppBadge?.();
+    const handleBadgeUpdate = () => {
+      if ('setAppBadge' in newNavigator) {
+        if (
+          !router.pathname.match(/(login|setup|resetpassword)/) &&
+          hasPermission(Permission.ADMIN)
+        ) {
+          requestsCount().then((data) => {
+            if (data.pending > 0) {
+              newNavigator.setAppBadge?.(data.pending);
+            } else {
+              newNavigator.clearAppBadge?.();
+            }
+          });
+        } else {
+          newNavigator.clearAppBadge?.();
+        }
       }
-    }
+    };
+
+    handleBadgeUpdate();
+
+    window.addEventListener('focus', handleBadgeUpdate);
+
+    return () => {
+      window.removeEventListener('focus', handleBadgeUpdate);
+    };
   }, [hasPermission, router.pathname]);
 
   if (router.pathname.match(/(login|setup|resetpassword)/)) {
@@ -217,6 +231,7 @@ CoreApp.getInitialProps = async (initialProps) => {
     applicationTitle: '',
     applicationUrl: '',
     hideAvailable: false,
+    hideBlacklisted: false,
     movie4kEnabled: false,
     series4kEnabled: false,
     localLogin: true,
@@ -234,6 +249,7 @@ CoreApp.getInitialProps = async (initialProps) => {
     locale: 'en',
     emailEnabled: false,
     newPlexLogin: true,
+    youtubeUrl: '',
   };
 
   if (ctx.res) {

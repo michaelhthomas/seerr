@@ -10,6 +10,7 @@ import { hasPermission, Permission } from '@server/lib/permissions';
 import { getSettings } from '@server/lib/settings';
 import logger from '@server/logger';
 import { AfterDate } from '@server/utils/dateHelpers';
+import { DbAwareColumn } from '@server/utils/DbColumnHelper';
 import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import path from 'path';
@@ -17,14 +18,12 @@ import { default as generatePassword } from 'secure-random-password';
 import {
   AfterLoad,
   Column,
-  CreateDateColumn,
   Entity,
   Not,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   RelationCount,
-  UpdateDateColumn,
 } from 'typeorm';
 import Issue from './Issue';
 import { MediaRequest } from './MediaRequest';
@@ -142,10 +141,14 @@ export class User {
   @OneToMany(() => Issue, (issue) => issue.createdBy, { cascade: true })
   public createdIssues: Issue[];
 
-  @CreateDateColumn()
+  @DbAwareColumn({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   public createdAt: Date;
 
-  @UpdateDateColumn()
+  @DbAwareColumn({
+    type: 'datetime',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
   public updatedAt: Date;
 
   public warnings: string[] = [];

@@ -40,6 +40,7 @@ module.exports = {
       'error',
       { allowSameFolder: true },
     ],
+    '@typescript-eslint/no-var-requires': 0,
   },
   overrides: [
     {

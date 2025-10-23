@@ -123,8 +123,9 @@ const Login = () => {
         settings.currentSettings.localLogin &&
         (mediaServerLogin ? (
           <LoginButton
-            key="jellyseerr"
-            data-testid="jellyseerr-login-button"
+            key="seerr"
+            data-testid="seerr-login-button"
+            className="flex-1 bg-transparent"
             onClick={() => setMediaServerLogin(false)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
