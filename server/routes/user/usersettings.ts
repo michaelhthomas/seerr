@@ -21,7 +21,7 @@ import { ApiError } from '@server/types/error';
 import { getHostname } from '@server/utils/getHostname';
 import { Router } from 'express';
 import net from 'net';
-import { Not } from 'typeorm';
+import { In, Not, type FindOptionsWhere } from 'typeorm';
 import { canMakePermissionsChange } from '.';
 
 const isOwnProfile = (): Middleware => {
