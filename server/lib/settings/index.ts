@@ -168,6 +168,7 @@ export interface MainSettings {
   enableSpecialEpisodes: boolean;
   locale: string;
   youtubeUrl: string;
+  openIdProviders: PublicOidcProvider[];
 }
 
 export interface ProxySettings {
@@ -225,6 +226,7 @@ interface FullPublicSettings extends PublicSettings {
   userEmailRequired: boolean;
   newPlexLogin: boolean;
   youtubeUrl: string;
+  openIdProviders: PublicOidcProvider[];
 }
 
 export interface NotificationAgentConfig {
@@ -427,6 +429,7 @@ class Settings {
         enableSpecialEpisodes: false,
         locale: 'en',
         youtubeUrl: '',
+        openIdProviders: [],
       },
       plex: {
         name: '',
@@ -732,6 +735,7 @@ class Settings {
         this.data.notifications.agents.email.options.userEmailRequired,
       newPlexLogin: this.data.main.newPlexLogin,
       youtubeUrl: this.data.main.youtubeUrl,
+      openIdProviders: this.data.main.openIdProviders,
     };
   }
 
