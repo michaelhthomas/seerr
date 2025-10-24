@@ -735,7 +735,7 @@ class Settings {
         this.data.notifications.agents.email.options.userEmailRequired,
       newPlexLogin: this.data.main.newPlexLogin,
       youtubeUrl: this.data.main.youtubeUrl,
-      openIdProviders: this.data.main.openIdProviders,
+      openIdProviders: this.data.oidc.providers,
     };
   }
 
