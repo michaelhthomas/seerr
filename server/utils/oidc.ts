@@ -7,6 +7,7 @@ import type {
 import type { OidcProvider } from '@server/lib/settings';
 import type { Request } from 'express';
 import * as yup from 'yup';
+import * as crypto from 'crypto';
 
 /** Fetch the issuer configuration from the OpenID Connect Discovery endpoint */
 export async function getOpenIdConfiguration(domain: string) {
@@ -34,6 +35,8 @@ function getOpenIdCallbackUrl(req: Request, provider: OidcProvider) {
   return callbackUrl.toString();
 }
 
+const getPkceSessionKey = () => 'oidc_pkce_data';
+
 /** Generate authentication request url */
 export async function getOpenIdRedirectUrl(
   req: Request,
@@ -42,12 +45,35 @@ export async function getOpenIdRedirectUrl(
 ) {
   const wellKnownInfo = await getOpenIdConfiguration(provider.issuerUrl);
   const url = new URL(wellKnownInfo.authorization_endpoint);
+
+  // PKCE values
+  const codeVerifier = crypto.randomBytes(43).toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+  const codeChallenge = crypto.createHash('sha256')
+    .update(codeVerifier)
+    .digest('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+
+  // store PKCE values using key
+  (req.session as any)[getPkceSessionKey()] = {
+    codeVerifier,
+    challengeMethod: 'S256',
+  };
+
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('client_id', provider.clientId);
 
   url.searchParams.set('redirect_uri', getOpenIdCallbackUrl(req, provider));
   url.searchParams.set('scope', provider.scopes ?? 'openid profile email');
   url.searchParams.set('state', state);
+
+  url.searchParams.set('code_challenge', codeChallenge);
+  url.searchParams.set('code_challenge_method', 'S256');
+
   return url.toString();
 }
 
@@ -65,10 +91,30 @@ export async function fetchOpenIdTokenData(
   formData.append('client_id', provider.clientId);
   formData.append('code', code);
 
-  return await fetch(wellKnownInfo.token_endpoint, {
+  // retrieve PKCE values
+  const pkceData = (req.session as any)[getPkceSessionKey()];
+  if (!pkceData) {
+    throw new OidcAuthorizationError('Missing PKCE session data');
+  }
+  formData.append('code_verifier', pkceData.codeVerifier);
+
+  const response = await fetch(wellKnownInfo.token_endpoint, {
     method: 'POST',
-    body: formData,
-  }).then((r) => r.json());
+    body: formData.toString(),
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
+
+  if (!response.ok) {
+    throw new OidcAuthorizationError(`Token endpoint returned ${response.status}`);
+  }
+
+  const tokenResponse = await response.json();
+  // clear PKCE data after successful exchange
+  delete (req.session as any)[getPkceSessionKey()];
+
+  return tokenResponse;
 }
 
 export async function getOpenIdUserInfo(
