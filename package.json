@@ -76,6 +76,7 @@
     "node-schedule": "2.1.1",
     "nodemailer": "10.2.1",
     "openid-client": "^6.8.2",
+    "oauth4webapi": "^3.8.5",
     "openpgp": "6.3.0",
     "pg": "8.23.0",
     "pug": "3.0.4",
