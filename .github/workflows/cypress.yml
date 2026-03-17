@@ -71,7 +71,7 @@ jobs:
         with:
           install: false
           build: pnpm cypress:build
-          start: pnpm start
+          start: pnpm cypress:start
           wait-on: 'http://localhost:5055'
           record: true
         env:

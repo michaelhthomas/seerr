@@ -11,7 +11,7 @@ import React, { Fragment, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { useIntl } from 'react-intl';
 
-interface ModalProps {
+interface ModalProps extends React.ComponentProps<'div'> {
   title?: string;
   subTitle?: string;
   onCancel?: (e?: MouseEvent<HTMLElement>) => void;
@@ -71,6 +71,7 @@ const Modal = React.forwardRef<HTMLDivElement, ModalProps>(
       cancelButtonProps,
       secondaryButtonProps,
       tertiaryButtonProps,
+      ...modalProps
     },
     parentRef
   ) => {
@@ -133,6 +134,7 @@ const Modal = React.forwardRef<HTMLDivElement, ModalProps>(
           leaveTo="opacity-0"
           show={!loading}
           ref={modalRef}
+          {...modalProps}
         >
           {backdrop && (
             <div className="absolute left-0 right-0 top-0 z-0 h-64 max-h-full w-full">

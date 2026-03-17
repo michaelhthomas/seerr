@@ -4,6 +4,7 @@ import PlexTvAPI from '@server/api/plextv';
 import TautulliAPI from '@server/api/tautulli';
 import { ApiErrorCode } from '@server/constants/error';
 import { getRepository } from '@server/datasource';
+import { LinkedAccount } from '@server/entity/LinkedAccount';
 import Media from '@server/entity/Media';
 import { MediaRequest } from '@server/entity/MediaRequest';
 import { User } from '@server/entity/User';
@@ -36,6 +37,7 @@ import rateLimit from 'express-rate-limit';
 import fs from 'fs';
 import { escapeRegExp, merge, omit, set, sortBy } from 'lodash';
 import { rescheduleJob } from 'node-schedule';
+import * as oauth from 'oauth4webapi';
 import path from 'path';
 import semver from 'semver';
 import { URL } from 'url';
@@ -107,6 +109,83 @@ settingsRoutes.post('/main/regenerate', async (req, res, next) => {
   }
 
   return res.status(200).json(filteredMainSettings(req.user, main));
+});
+
+settingsRoutes.get('/oidc', async (req, res) => {
+  const settings = getSettings();
+
+  return res.status(200).json(settings.oidc);
+});
+
+settingsRoutes.put('/oidc/:slug', async (req, res) => {
+  const settings = getSettings();
+  let provider = settings.oidc.providers.findIndex(
+    (p) => p.slug === req.params.slug
+  );
+
+  if (provider !== -1) {
+    Object.assign(settings.oidc.providers[provider], req.body);
+  } else {
+    settings.oidc.providers.push({ slug: req.params.slug, ...req.body });
+    provider = settings.oidc.providers.length - 1;
+  }
+
+  await settings.save();
+
+  return res.status(200).json(settings.oidc.providers[provider]);
+});
+
+settingsRoutes.delete('/oidc/:slug', async (req, res) => {
+  const settings = getSettings();
+  const { slug } = req.params;
+  const provider = settings.oidc.providers.findIndex((p) => p.slug === slug);
+
+  if (provider === -1)
+    return res.status(404).json({ message: 'Provider not found' });
+
+  settings.oidc.providers.splice(provider, 1);
+  await settings.save();
+
+  // Try to clean up orphaned linked accounts
+  try {
+    await getRepository(LinkedAccount).delete({ provider: slug });
+  } catch (e) {
+    logger.error('Linked account cleanup failed', {
+      label: 'API',
+      errorMessage: e.message,
+    });
+  }
+
+  return res.status(200).json(settings.oidc);
+});
+
+settingsRoutes.post('/oidc/test', async (req, res) => {
+  const { issuerUrl } = req.body as { issuerUrl: string };
+
+  try {
+    const issuer = new URL(issuerUrl);
+    const discoveryResponse = await oauth.discoveryRequest(
+      issuer,
+      process.env.OIDC_ALLOW_INSECURE === 'true'
+        ? { [oauth.allowInsecureRequests]: true }
+        : {}
+    );
+    await oauth.processDiscoveryResponse(issuer, discoveryResponse);
+
+    return res.status(204).send();
+  } catch (error) {
+    logger.error('OIDC provider test failed', {
+      label: 'API',
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+    });
+
+    return res.status(500).json({
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Failed to connect to provider',
+    });
+  }
 });
 
 settingsRoutes.get('/plex', (_req, res) => {

@@ -1,12 +1,12 @@
 import EmbyLogo from '@app/assets/services/emby-icon-only.svg';
 import JellyfinLogo from '@app/assets/services/jellyfin-icon.svg';
 import PlexLogo from '@app/assets/services/plex.svg';
-import Button from '@app/components/Common/Button';
 import ImageFader from '@app/components/Common/ImageFader';
 import PageTitle from '@app/components/Common/PageTitle';
 import LanguagePicker from '@app/components/Layout/LanguagePicker';
 import JellyfinLogin from '@app/components/Login/JellyfinLogin';
 import LocalLogin from '@app/components/Login/LocalLogin';
+import OidcLoginButton from '@app/components/Login/OidcLoginButton';
 import PlexLoginButton from '@app/components/Login/PlexLoginButton';
 import useSettings from '@app/hooks/useSettings';
 import { useUser } from '@app/hooks/useUser';
@@ -17,10 +17,12 @@ import { MediaServerType } from '@server/constants/server';
 import axios from 'axios';
 import { useRouter } from 'next/dist/client/router';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { CSSTransition, SwitchTransition } from 'react-transition-group';
 import useSWR from 'swr';
+import LoginButton from './LoginButton';
 
 const messages = defineMessages('components.Login', {
   signin: 'Sign In',
@@ -33,6 +35,7 @@ const messages = defineMessages('components.Login', {
 
 const Login = () => {
   const intl = useIntl();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const settings = useSettings();
   const { user, revalidate } = useUser();
@@ -70,10 +73,10 @@ const Login = () => {
   // Effect that is triggered whenever `useUser`'s user changes. If we get a new
   // valid user, we redirect the user to the home page as the login was successful.
   useEffect(() => {
-    if (user) {
+    if (user && !searchParams.has('code')) {
       router.push('/');
     }
-  }, [user, router]);
+  }, [user, router, searchParams]);
 
   const { data: backdrops } = useSWR<string[]>('/api/v1/backdrops', {
     refreshInterval: 0,
@@ -121,10 +124,9 @@ const Login = () => {
       ) : (
         settings.currentSettings.localLogin &&
         (mediaServerLogin ? (
-          <Button
+          <LoginButton
             key="seerr"
             data-testid="seerr-login-button"
-            className="flex-1 bg-transparent"
             onClick={() => setMediaServerLogin(false)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -134,19 +136,25 @@ const Login = () => {
               className="mr-2 h-5"
             />
             <span>{settings.currentSettings.applicationTitle}</span>
-          </Button>
+          </LoginButton>
         ) : (
-          <Button
+          <LoginButton
             key="mediaserver"
             data-testid="mediaserver-login-button"
-            className="flex-1 bg-transparent"
             onClick={() => setMediaServerLogin(true)}
           >
             <MediaServerLogo />
             <span>{mediaServerName}</span>
-          </Button>
+          </LoginButton>
         ))
       )),
+    ...settings.currentSettings.openIdProviders.map((provider) => (
+      <OidcLoginButton
+        key={provider.slug}
+        provider={provider}
+        onError={setError}
+      />
+    )),
   ].filter((o): o is JSX.Element => !!o);
 
   return (
@@ -197,46 +205,50 @@ const Login = () => {
               </div>
             </Transition>
             <div className="px-10 py-8">
-              <SwitchTransition mode="out-in">
-                <CSSTransition
-                  key={mediaServerLogin ? 'ms' : 'local'}
-                  nodeRef={loginRef}
-                  addEndListener={(done) => {
-                    loginRef.current?.addEventListener(
-                      'transitionend',
-                      done,
-                      false
-                    );
-                  }}
-                  onEntered={() => {
-                    document
-                      .querySelector<HTMLInputElement>('#email, #username')
-                      ?.focus();
-                  }}
-                  classNames={{
-                    appear: 'opacity-0',
-                    appearActive: 'transition-opacity duration-500 opacity-100',
-                    enter: 'opacity-0',
-                    enterActive: 'transition-opacity duration-500 opacity-100',
-                    exitActive: 'transition-opacity duration-0 opacity-0',
-                  }}
-                >
-                  <div ref={loginRef} className="button-container">
-                    {isJellyfin &&
-                    (mediaServerLogin ||
-                      !settings.currentSettings.localLogin) ? (
-                      <JellyfinLogin
-                        serverType={settings.currentSettings.mediaServerType}
-                        revalidate={revalidate}
-                      />
-                    ) : (
-                      settings.currentSettings.localLogin && (
-                        <LocalLogin revalidate={revalidate} />
-                      )
-                    )}
-                  </div>
-                </CSSTransition>
-              </SwitchTransition>
+              {loginFormVisible && (
+                <SwitchTransition mode="out-in">
+                  <CSSTransition
+                    key={mediaServerLogin ? 'ms' : 'local'}
+                    nodeRef={loginRef}
+                    addEndListener={(done) => {
+                      loginRef.current?.addEventListener(
+                        'transitionend',
+                        done,
+                        false
+                      );
+                    }}
+                    onEntered={() => {
+                      document
+                        .querySelector<HTMLInputElement>('#email, #username')
+                        ?.focus();
+                    }}
+                    classNames={{
+                      appear: 'opacity-0',
+                      appearActive:
+                        'transition-opacity duration-500 opacity-100',
+                      enter: 'opacity-0',
+                      enterActive:
+                        'transition-opacity duration-500 opacity-100',
+                      exitActive: 'transition-opacity duration-0 opacity-0',
+                    }}
+                  >
+                    <div ref={loginRef} className="button-container">
+                      {isJellyfin &&
+                      (mediaServerLogin ||
+                        !settings.currentSettings.localLogin) ? (
+                        <JellyfinLogin
+                          serverType={settings.currentSettings.mediaServerType}
+                          revalidate={revalidate}
+                        />
+                      ) : (
+                        settings.currentSettings.localLogin && (
+                          <LocalLogin revalidate={revalidate} />
+                        )
+                      )}
+                    </div>
+                  </CSSTransition>
+                </SwitchTransition>
+              )}
 
               {additionalLoginOptions.length > 0 &&
                 (loginFormVisible ? (

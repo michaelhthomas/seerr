@@ -71,7 +71,7 @@ const LocalLogin = ({ revalidate }: LocalLoginProps) => {
       {({ errors, touched, values, isSubmitting, isValid }) => {
         return (
           <>
-            <Form data-form-type="login">
+            <Form data-form-type="login" data-testid="seerr-login">
               <div>
                 <h2 className="-mt-1 mb-6 text-center text-lg font-bold text-neutral-200">
                   {intl.formatMessage(messages.loginwithapp, {
