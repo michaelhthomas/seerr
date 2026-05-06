@@ -420,6 +420,30 @@ router.get<{ id: string }>('/:id', async (req, res, next) => {
   }
 });
 
+router.get<{ jellyfinUserId: string }>(
+  '/jellyfin/:jellyfinUserId',
+  async (req, res, next) => {
+    try {
+      const userRepository = getRepository(User);
+
+      const jellyfinUserId = normalizeJellyfinGuid(req.params.jellyfinUserId);
+      if (!jellyfinUserId) {
+        return next({ status: 400, message: 'Invalid Jellyfin User ID.' });
+      }
+
+      const user = await userRepository.findOneOrFail({
+        where: { jellyfinUserId },
+      });
+
+      return res
+        .status(200)
+        .json(user.filter(req.user?.hasPermission(Permission.MANAGE_USERS)));
+    } catch {
+      next({ status: 404, message: 'User not found.' });
+    }
+  }
+);
+
 router.use('/:id/settings', userSettingsRoutes);
 
 router.get<{ id: string }, UserRequestsResponse>(
