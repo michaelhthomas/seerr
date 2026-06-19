@@ -2,6 +2,7 @@ import Accordion from '@app/components/Common/Accordion';
 import Button from '@app/components/Common/Button';
 import Modal from '@app/components/Common/Modal';
 import SensitiveInput from '@app/components/Common/SensitiveInput';
+import useToasts from '@app/hooks/useToasts';
 import globalMessages from '@app/i18n/globalMessages';
 import defineMessages from '@app/utils/defineMessages';
 import { Transition } from '@headlessui/react';
@@ -13,7 +14,6 @@ import axios from 'axios';
 import { Field, Formik, useFormikContext, type FieldAttributes } from 'formik';
 import { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
-import { useToasts } from 'react-toast-notifications';
 import { twMerge } from 'tailwind-merge';
 import * as Yup from 'yup';
 
@@ -41,6 +41,11 @@ const messages = defineMessages('settings.settings.SettingsOidc', {
   oidcRequiredClaims: 'Required Claims',
   oidcRequiredClaimsTip:
     'Space-separated list of boolean claims that are required to log in',
+  oidcRoleClaim: 'Role Claim',
+  oidcRoleClaimTip: 'The claim that holds the user roles',
+  oidcUserRoles: 'User Roles',
+  oidcUserRolesTip:
+    'Comma-separated list of roles that a user must have to authorize access',
   oidcNewUserLogin: 'Allow New Users',
   oidcNewUserLoginTip:
     'Create accounts for new users logging in with this provider',
@@ -98,6 +103,8 @@ export default function EditOidcModal(props: EditOidcModalProps) {
     logo: Yup.string(),
     requiredClaims: Yup.string(),
     scopes: Yup.string(),
+    roleClaim: Yup.string(),
+    userRoles: Yup.string(),
     newUserLogin: Yup.boolean(),
   });
 
@@ -111,7 +118,7 @@ export default function EditOidcModal(props: EditOidcModalProps) {
       });
 
       props.onOk();
-    } catch (e) {
+    } catch {
       addToast(intl.formatMessage(messages.saveError), {
         appearance: 'error',
         autoDismiss: true,
@@ -128,10 +135,12 @@ export default function EditOidcModal(props: EditOidcModalProps) {
           issuerUrl: props.provider?.issuerUrl ?? '',
           clientId: props.provider?.clientId ?? '',
           clientSecret: props.provider?.clientSecret ?? '',
-          logo: props.provider?.logo,
-          requiredClaims: props.provider?.requiredClaims,
-          scopes: props.provider?.scopes,
-          newUserLogin: props.provider?.newUserLogin,
+          logo: props.provider?.logo ?? '',
+          requiredClaims: props.provider?.requiredClaims ?? '',
+          scopes: props.provider?.scopes ?? '',
+          roleClaim: props.provider?.roleClaim ?? '',
+          userRoles: props.provider?.userRoles ?? '',
+          newUserLogin: props.provider?.newUserLogin ?? false,
         }}
         validationSchema={oidcSettingsSchema}
         onSubmit={onSubmit}
@@ -149,7 +158,7 @@ export default function EditOidcModal(props: EditOidcModalProps) {
                 autoDismiss: true,
                 appearance: 'success',
               });
-            } catch (e) {
+            } catch {
               addToast(intl.formatMessage(messages.toastTestFailed), {
                 autoDismiss: true,
                 appearance: 'error',
@@ -391,6 +400,46 @@ export default function EditOidcModal(props: EditOidcModalProps) {
                               <div className="error">
                                 {errors.requiredClaims}
                               </div>
+                            )}
+                        </div>
+                      </div>
+                      <div className="form-row">
+                        <label htmlFor="oidcRoleClaim" className="text-label">
+                          {intl.formatMessage(messages.oidcRoleClaim)}
+                          <span className="label-tip">
+                            {intl.formatMessage(messages.oidcRoleClaimTip)}
+                          </span>
+                        </label>
+                        <div className="form-input-area">
+                          <Field
+                            id="oidcRoleClaim"
+                            name="roleClaim"
+                            type="text"
+                          />
+                          {errors.roleClaim &&
+                            touched.roleClaim &&
+                            typeof errors.roleClaim === 'string' && (
+                              <div className="error">{errors.roleClaim}</div>
+                            )}
+                        </div>
+                      </div>
+                      <div className="form-row">
+                        <label htmlFor="oidcUserRoles" className="text-label">
+                          {intl.formatMessage(messages.oidcUserRoles)}
+                          <span className="label-tip">
+                            {intl.formatMessage(messages.oidcUserRolesTip)}
+                          </span>
+                        </label>
+                        <div className="form-input-area">
+                          <Field
+                            id="oidcUserRoles"
+                            name="userRoles"
+                            type="text"
+                          />
+                          {errors.userRoles &&
+                            touched.userRoles &&
+                            typeof errors.userRoles === 'string' && (
+                              <div className="error">{errors.userRoles}</div>
                             )}
                         </div>
                       </div>
