@@ -721,15 +721,15 @@ authRoutes.get('/oidc/login/:slug', async (req, res, next) => {
    * is why we're using it regardless. Like PKCE, random state must be generated
    * for every redirect to the authorization_endpoint.
    */
-  if (!config.serverMetadata().supportsPKCE()) {
-    const state = openIdClient.randomState();
-    parameters.state = state;
-    res.cookie('oidc-state', state, {
-      maxAge: 60000,
-      httpOnly: true,
-      secure: req.protocol === 'https',
-    });
-  }
+  // if (!config.serverMetadata().supportsPKCE()) {
+  const state = openIdClient.randomState();
+  parameters.state = state;
+  res.cookie('oidc-state', state, {
+    maxAge: 60000,
+    httpOnly: true,
+    secure: req.protocol === 'https',
+  });
+  // }
 
   let redirectUrl: URL;
   try {
@@ -866,6 +866,30 @@ authRoutes.post('/oidc/callback/:slug', async (req, res, next) => {
     const value = fullUserInfo[claim];
     return value === true;
   });
+
+  let hasUserRole = false;
+  const roleClaim = provider.roleClaim;
+  if (roleClaim) {
+    const providerUserRoles = provider.userRoles?.split(',') ?? [];
+    const userRoles = fullUserInfo[roleClaim];
+    hasUserRole = providerUserRoles.some((providerUserRole) =>
+      Array.isArray(userRoles)
+        ? userRoles.some((userRole) => providerUserRole === userRole)
+        : false
+    );
+
+    if (!hasUserRole) {
+      logger.info('Failed OIDC login attempt', {
+        cause: 'Failed to validate user role claims',
+        ip: req.ip,
+        userRoleClaims: provider.userRoles,
+      });
+      return next({
+        status: 403,
+        error: ApiErrorCode.Unauthorized,
+      });
+    }
+  }
 
   if (!hasRequiredClaims) {
     logger.info('Failed OIDC login attempt', {
