@@ -69,6 +69,7 @@ export default function SettingsOidc(props: SettingsOidcProps) {
           okButtonProps={{ type: 'button' }}
           title={intl.formatMessage(messages.configureoidc)}
           backgroundClickable={false}
+          data-testid="settings-oidc"
         >
           <ul className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {data?.providers.map((provider) => (

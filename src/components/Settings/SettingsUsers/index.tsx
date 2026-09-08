@@ -251,6 +251,7 @@ const SettingsUsers = () => {
                         />
                         {values.oidcLogin && (
                           <CogIcon
+                            data-testid="oidc-settings-button"
                             className="w-8 cursor-pointer text-gray-400"
                             onClick={() => setShowOidcDialog(true)}
                           />

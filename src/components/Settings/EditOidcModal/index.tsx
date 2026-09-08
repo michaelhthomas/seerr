@@ -184,6 +184,7 @@ export default function EditOidcModal(props: EditOidcModalProps) {
                     })
                   : intl.formatMessage(messages.addoidc)
               }
+              data-testid="edit-oidc-modal"
             >
               <div className="form-row">
                 <label htmlFor="oidcName" className="text-label">
