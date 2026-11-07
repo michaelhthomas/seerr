@@ -78,6 +78,7 @@ export default function OidcLoginButton({
       loading={loading}
       onClick={() => redirectToLogin()}
       className="min-w-0 flex-grow"
+      data-testid={`oidc-login-${provider.slug}`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img

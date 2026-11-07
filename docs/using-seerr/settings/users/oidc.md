@@ -6,72 +6,57 @@ sidebar_position: 2.5
 
 # OpenID Connect
 
-Seerr supports OpenID Connect (OIDC) for authentication and authorization. 
+Seerr supports OpenID Connect (OIDC) for authentication and authorization. To begin setting up OpenID Connect, follow these steps:
 
-:::tip
-
-Development is ongoing for a settings interface to configure OpenID Connect support in Seerr. In the meantime, configuration must be done by manually updating the settings in `settings.json`.
-
-:::
-To begin setting up OpenID Connect, make the following updates:
-
-```diff title="settings.json"
- {
-   ...
--  "oidcLogin": false,
-+  "oidcLogin": true,
-   ...
-   "oidc": {
--    "providers": []
-+    "providers": [
-+      {
-+        "slug": "example",
-+        "name": "Example",
-+        "issuerUrl": "https://example.com",
-+        "clientId": "seerr",
-+        "clientSecret": "SUPER_SECRET_STRING",
-+        "logo": "https://example.com/logo.png"
-+      }
-+    ]
-   }
-   ...
- }
-```
+1. First, enable OpenID Connect [on the User settings page](./index.md#enable-openid-connect-sign-in).
+2. Once enabled, access OpenID Connect settings using the cog icon to the right.
+3. Add a new provider by clicking the "Add Provider" button.
+4. Configure the provider with the options described below.
+5. Link your OpenID Connect account to your Seerr account using the "Link Account" button on the Linked Accounts page in your user's settings.
+6. Finally, you should be able to log in using your OpenID Connect account.
 
 ## Configuration Options
 
-### Provider Slug (`slug`)
-
-Unique identifier for the provider. This should not be changed after initial setup. 
-
-### Provider Name (`name`)
+### Provider Name
 
 Name of the provider which appears on the login screen.
 
-### Logo (`logo`)
+Configuring this setting will automatically determine the [provider slug](#provider-slug), unless it is manually specified.
+
+### Logo
 
 The logo to display for the provider. Should be a URL or base64 encoded image.
 
-### Issuer URL (`issuerUrl`)
+:::tip
+
+The search icon at the right of the logo field opens the [selfh.st/icons](https://selfh.st/icons) database. These icons include popular self-hosted OpenID Connect providers.
+
+:::
+
+### Issuer URL
 The base URL of the identity provider's OpenID Connect endpoint
 
-### Client ID (`clientId`)
+### Client ID
 
 The Client ID assigned to Seerr
 
-### Client Secret (`clientSecret`)
+### Client Secret
 
 The Client Secret assigned to Seerr
 
-### Scopes (`scopes`)
+### Provider Slug
+
+Unique identifier for the provider
+
+### Scopes
 
 Space-separated list of scopes to request from the provider
 
-### Required Claims (`requiredClaims`)
+### Required Claims
 
 Space-separated list of boolean claims that are required to log in
 
-### Allow New Users (`newUserLogin`)
+### Allow New Users
 
 Create accounts for new users logging in with this provider
 
